@@ -1,7 +1,7 @@
 {
   "name": "serti-gen-mailer",
   "version": "1.0.0",
-  "description": "Simple and light mailer of generated sertificates",
+  "description": "Simple and light mailer of generated certificates",
   "main": "src/server.js",
   "scripts": {
     "start": "nodemon --exec babel-node src/server.js",

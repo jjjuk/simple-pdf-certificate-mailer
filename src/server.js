@@ -31,20 +31,20 @@ fastify.post('/webhook', async (req, res) => {
     res.send({ status: 'Сертивикат не создан', response: req?.body })
   else {
     const {
-      max: { sertificateId: lastId },
-    } = await prisma.sertificate.aggregate({
+      max: { certificateId: lastId },
+    } = await prisma.certificate.aggregate({
       max: {
-        sertificateId: true,
+        certificateId: true,
       },
     })
 
-    const { sertificateId } = await prisma.sertificate.create({
+    const { certificateId } = await prisma.certificate.create({
       data: {
-        sertificateId: lastId + 1,
+        certificateId: lastId + 1,
       },
     })
 
-    const url = await createPdf({ productId, sertificateId, name })
+    const url = await createPdf({ productId, certificateId, name })
 
     res.send({ status: 'Успешно', response: { ...req?.body, pdfUrl: url } })
   }
@@ -71,20 +71,20 @@ fastify.get('/auth', (req, res) => {
   }
 })
 
-fastify.get('/getLastSertificateId', async (req, res) => {
+fastify.get('/getLastcertificateId', async (req, res) => {
   const password = getPassword(req)
   if (password !== process.env.PASSWORD) {
     res.send(createError(401, 'Неверный пароль.'))
   } else {
-    const [{ sertificateId: lastId }] = await prisma.sertificate.findMany({
-      orderBy: { sertificateId: 'desc' },
+    const [{ certificateId: lastId }] = await prisma.certificate.findMany({
+      orderBy: { certificateId: 'desc' },
       take: 1,
     })
     res.send({ lastId })
   }
 })
 
-fastify.post('/setLastSertificateId', (req, res) => {
+fastify.post('/setLastcertificateId', (req, res) => {
   const password = getPassword(res)
   if (password !== process.env.PASSWORD) {
     res.send(createError(401, 'Неверный пароль.'))
@@ -93,12 +93,12 @@ fastify.post('/setLastSertificateId', (req, res) => {
 
     // console.log('body === ', body)
 
-    const { sertificateId } = body
+    const { certificateId } = body
 
-    prisma.sertificate
+    prisma.certificate
       .create({
         data: {
-          sertificateId: Number(sertificateId),
+          certificateId: Number(certificateId),
         },
       })
       .catch((error) => res.send(createError(409, error)))

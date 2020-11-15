@@ -7,7 +7,7 @@ datasource sqlite {
   url      = "file:dev.db"
 }
 
-model Sertificate {
+model Certificate {
   id Int @default(autoincrement()) @id
-  sertificateId Int @unique
+  certificateId Int @unique
 }

@@ -2,12 +2,12 @@ const puppeteer = require('puppeteer')
 const fs = require('fs')
 const path = require('path')
 
-const createPdf = async ({ productId, sertificateId, name }) => {
+const createPdf = async ({ productId, certificateId, name }) => {
   const { html } = require(`./templates/${productId}`)
 
-  console.log(sertificateId)
+  console.log(certificateId)
 
-  const contetnt = html(name, sertificateId, productId)
+  const contetnt = html(name, certificateId, productId)
 
   const browser = await puppeteer.launch()
   const page = await browser.newPage()
@@ -16,7 +16,7 @@ const createPdf = async ({ productId, sertificateId, name }) => {
   fs.existsSync(path.join(__dirname, './pdf')) ||
     fs.mkdirSync(path.join(__dirname, './pdf'))
 
-  const pathTo = path.join(__dirname, `./pdf/${sertificateId}.pdf`)
+  const pathTo = path.join(__dirname, `./pdf/${certificateId}.pdf`)
 
   await page.pdf({
     path: pathTo,
