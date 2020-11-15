@@ -11,3 +11,4 @@ src/templates/*
 !src/templates/test
 client/*
 !client/build
+yarn-error.log
