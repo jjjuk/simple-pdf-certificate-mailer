@@ -23,8 +23,28 @@ fastify.register(require('fastify-static'), {
   prefix: '/public/', // optional: default '/'
 })
 
+fastify.addHook('onRequest', async (req, res) => {
+  const endpopint = req.url.split('/')[1]
+
+  if (
+    endpopint !== 'public' &&
+    endpopint !== 'auth' &&
+    endpopint !== 'webhook'
+  ) {
+    // const { password } = getPassword(req)
+
+    if (/* password !== process.env.PASSWORD */false)
+      res.send(createError(401, 'Неверный токен.'))
+
+    console.log('request endpopint: ', endpopint)
+  } else if (endpopint === 'webhook') {
+    req.headers.authorization !== `Bearer ${process.env.WEBHOOK_TOKEN}` &&
+      res.send(createError(401, 'Неверный токен.'))
+  }
+})
+
 fastify.post('/webhook', async (req, res) => {
-  console.log('body === ', req?.body)
+  // console.log('body === ', req?.body)
 
   const { name, product } = req?.body
 
@@ -74,66 +94,56 @@ fastify.get('/auth', (req, res) => {
   }
 })
 
-fastify.get('/getLastCertificateId', async (req, res) => {
-  const password = getPassword(req)
-  if (/* password !== process.env.PASSWORD */ false) {
-    res.send(createError(401, 'Неверный пароль.'))
-  } else {
-    const {
-      max: { certificateId: lastId },
-    } = await prisma.certificate.aggregate({
-      max: {
-        certificateId: true,
-      },
-    })
-    res.send({ lastId })
-  }
+fastify.get('/getLastCertificateId', async (_, res) => {
+  const {
+    max: { certificateId: lastId },
+  } = await prisma.certificate.aggregate({
+    max: {
+      certificateId: true,
+    },
+  })
+  res.send({ lastId })
 })
 
 fastify.post('/setLastCertificateId', async (req, res) => {
-  const password = getPassword(res)
-  if (/* password !== process.env.PASSWORD */ false) {
-    res.send(createError(401, 'Неверный пароль.'))
-  } else {
-    const body = req?.body
+  const body = req?.body
 
-    // console.log('body === ', body)
+  // console.log('body === ', body)
 
-    const { certificateId } = body
+  const { certificateId } = body
 
-    const {
-      max: { certificateId: lastId },
-    } = await prisma.certificate.aggregate({
-      max: {
-        certificateId: true,
-      },
-    })
+  const {
+    max: { certificateId: lastId },
+  } = await prisma.certificate.aggregate({
+    max: {
+      certificateId: true,
+    },
+  })
 
-    if (lastId < certificateId)
-      prisma.certificate
-        .create({
-          data: {
-            certificateId: Number(certificateId),
-          },
-        })
-        .catch((error) => res.send(createError(409, error)))
-        .then((response) => res.send({ response }))
-    else {
-      await prisma.certificate
-        .deleteMany()
-        .catch((error) => res.send(createError(409, error)))
-        .then(() =>
-          prisma.certificate
-            .create({
-              data: {
-                certificateId: Number(certificateId),
-              },
-            })
-            .catch((error) => res.send(createError(409, error)))
-            .then((response) => res.send({ response }))
-        )
-      return res
-    }
+  if (lastId < certificateId)
+    prisma.certificate
+      .create({
+        data: {
+          certificateId: Number(certificateId),
+        },
+      })
+      .catch((error) => res.send(createError(409, error)))
+      .then((response) => res.send({ response }))
+  else {
+    await prisma.certificate
+      .deleteMany()
+      .catch((error) => res.send(createError(409, error)))
+      .then(() =>
+        prisma.certificate
+          .create({
+            data: {
+              certificateId: Number(certificateId),
+            },
+          })
+          .catch((error) => res.send(createError(409, error)))
+          .then((response) => res.send({ response }))
+      )
+    return res
   }
 })
 

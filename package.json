@@ -23,6 +23,7 @@
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.32",
     "nodemon": "^2.0.6",
+    "pino-pretty": "^4.3.0",
     "puppeteer": "^5.4.1"
   },
   "devDependencies": {
