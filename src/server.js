@@ -28,7 +28,7 @@ fastify.addHook('onRequest', async (req, res) => {
 
   if (
     endpopint !== 'public' &&
-    endpopint !== 'auth' &&
+    endpopint !== 'login' &&
     endpopint !== 'webhook'
   ) {
     // const { password } = getPassword(req)
@@ -84,14 +84,8 @@ fastify.post('/login', (req, res) => {
   }
 })
 
-fastify.get('/auth', (req, res) => {
-  const { password } = getPassword(req)
-
-  if (password !== process.env.PASSWORD)
-    res.send(createError(401, 'Не авторизован.'))
-  else {
+fastify.get('/auth', (_, res) => {  
     res.send({ status: 'Успешно' })
-  }
 })
 
 fastify.get('/getLastCertificateId', async (_, res) => {
