@@ -7,12 +7,15 @@ const path = require('path')
 
 const prisma = new PrismaClient()
 
-// console.log(process.env.PASSWORD)
-
 const createError = require('http-errors')
 
 const fastify = require('fastify')({
   logger: { prettyPrint: true },
+})
+
+fastify.register(require('fastify-cors'), {
+  origin: '*',
+  allowedHeaders: ['Content-Type', 'authorization', 'Authorization'],
 })
 
 fastify.register(require('fastify-static'), {
@@ -71,22 +74,25 @@ fastify.get('/auth', (req, res) => {
   }
 })
 
-fastify.get('/getLastcertificateId', async (req, res) => {
+fastify.get('/getLastCertificateId', async (req, res) => {
   const password = getPassword(req)
-  if (password !== process.env.PASSWORD) {
+  if (/* password !== process.env.PASSWORD */ false) {
     res.send(createError(401, 'Неверный пароль.'))
   } else {
-    const [{ certificateId: lastId }] = await prisma.certificate.findMany({
-      orderBy: { certificateId: 'desc' },
-      take: 1,
+    const {
+      max: { certificateId: lastId },
+    } = await prisma.certificate.aggregate({
+      max: {
+        certificateId: true,
+      },
     })
     res.send({ lastId })
   }
 })
 
-fastify.post('/setLastcertificateId', (req, res) => {
+fastify.post('/setLastCertificateId', async (req, res) => {
   const password = getPassword(res)
-  if (password !== process.env.PASSWORD) {
+  if (/* password !== process.env.PASSWORD */ false) {
     res.send(createError(401, 'Неверный пароль.'))
   } else {
     const body = req?.body
@@ -95,14 +101,39 @@ fastify.post('/setLastcertificateId', (req, res) => {
 
     const { certificateId } = body
 
-    prisma.certificate
-      .create({
-        data: {
-          certificateId: Number(certificateId),
-        },
-      })
-      .catch((error) => res.send(createError(409, error)))
-      .then((response) => res.send({ response }))
+    const {
+      max: { certificateId: lastId },
+    } = await prisma.certificate.aggregate({
+      max: {
+        certificateId: true,
+      },
+    })
+
+    if (lastId < certificateId)
+      prisma.certificate
+        .create({
+          data: {
+            certificateId: Number(certificateId),
+          },
+        })
+        .catch((error) => res.send(createError(409, error)))
+        .then((response) => res.send({ response }))
+    else {
+      await prisma.certificate
+        .deleteMany()
+        .catch((error) => res.send(createError(409, error)))
+        .then(() =>
+          prisma.certificate
+            .create({
+              data: {
+                certificateId: Number(certificateId),
+              },
+            })
+            .catch((error) => res.send(createError(409, error)))
+            .then((response) => res.send({ response }))
+        )
+      return res
+    }
   }
 })
 
