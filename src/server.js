@@ -20,7 +20,7 @@ fastify.register(require('fastify-cors'), {
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname, './templates'),
-  prefix: '/public/', // optional: default '/'
+  prefix: '/templates/', // optional: default '/'
 })
 
 fastify.addHook('onRequest', async (req, res) => {
@@ -31,12 +31,12 @@ fastify.addHook('onRequest', async (req, res) => {
     endpopint !== 'login' &&
     endpopint !== 'webhook'
   ) {
-    // const { password } = getPassword(req)
+    const password = getPassword(req)
 
-    if (/* password !== process.env.PASSWORD */false)
+    if (password !== process.env.PASSWORD)
       res.send(createError(401, 'Неверный токен.'))
 
-    console.log('request endpopint: ', endpopint)
+    // console.log(password, process.env.PASSWORD, req.headers)
   } else if (endpopint === 'webhook') {
     req.headers.authorization !== `Bearer ${process.env.WEBHOOK_TOKEN}` &&
       res.send(createError(401, 'Неверный токен.'))
@@ -74,18 +74,19 @@ fastify.post('/webhook', async (req, res) => {
 })
 
 fastify.post('/login', (req, res) => {
+  // console.log('BODY ---------------' , req?.body, process.env.PASSWORD)
   const { password } = req?.body
 
   if (password !== process.env.PASSWORD)
     res.send(createError(401, 'Неверный пароль.'))
   else {
     const token = getToken()
-    res.send({ status: 'Успешно', response: { token } })
+    res.send({ status: 'Успешно', token })
   }
 })
 
-fastify.get('/auth', (_, res) => {  
-    res.send({ status: 'Успешно' })
+fastify.get('/auth', (_, res) => {
+  res.send({ status: 'Успешно' })
 })
 
 fastify.get('/getLastCertificateId', async (_, res) => {

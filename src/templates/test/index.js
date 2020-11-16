@@ -137,7 +137,7 @@ const html = `
 
   <div class="card">
     <div class="card-avatar">
-      <img class="avatar" src="${process.env.SERVER_URL}/public/test/JGEJo8XYysY.jpg" />
+      <img class="avatar" src="${process.env.SERVER_URL}/templates/test/JGEJo8XYysY.jpg" />
     </div>
     <div class="card-details">
       <div class="name">Jenechka</div>
