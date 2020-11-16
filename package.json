@@ -18,12 +18,14 @@
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "express-favicon": "^2.0.1",
     "express-pino-logger": "^5.0.0",
     "http-errors": "1.8.0",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.32",
     "nodemon": "^2.0.6",
+    "pino-pretty": "^4.3.0",
     "puppeteer": "^5.4.1"
   },
   "devDependencies": {
