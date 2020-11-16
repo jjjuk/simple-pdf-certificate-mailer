@@ -38,22 +38,18 @@ app.use('/templates', express.static(path.join(__dirname, './templates')))
 
 app.use(async (req, res, next) => {
   const endpopint = req.url.split('/')[1]
-  console.log('--------route', endpopint)
   if (
     endpopint === 'setLastCertificateId' ||
     endpopint === 'getLastCertificateId' ||
     endpopint === 'auth'
   ) {
-    console.log('--------AUTH', endpopint)
     const password = getPassword(req)
 
     if (password !== process.env.PASSWORD)
-      res.send(createError(401, 'Неверный токен.'))
-
-    // console.log(password, process.env.PASSWORD, req.headers)
+      res.send(createError(401, 'Invalid token'))
   } else if (endpopint === 'webhook') {
     req.headers.authorization !== `Bearer ${process.env.WEBHOOK_TOKEN}` &&
-      res.send(createError(401, 'Неверный токен.'))
+      res.send(createError(401, 'Invalid token'))
   }
   next()
 })
@@ -63,14 +59,12 @@ app.get('/', function (_, res) {
 })
 
 app.post('/webhook', async (req, res) => {
-  // console.log('body === ', req?.body)
-
   const { name, product } = req?.body
 
   const productId = Number(product.split('. ')[0].replace(/^\D+/g, '')) || 47088
 
   if (!productId)
-    res.send({ status: 'Сертивикат не создан', response: req?.body })
+    res.send({ status: 'Certificate not created', response: req?.body })
   else {
     const {
       max: { certificateId: lastId },
@@ -88,24 +82,23 @@ app.post('/webhook', async (req, res) => {
 
     const url = await createPdf({ productId, certificateId, name })
 
-    res.send({ status: 'Успешно', response: { ...req?.body, pdfUrl: url } })
+    res.send({ status: 'Succes', response: { ...req?.body, pdfUrl: url } })
   }
 })
 
 app.post('/login', (req, res) => {
-  console.log('BODY ---------------', req.body, process.env.PASSWORD)
   const { password } = req?.body
 
   if (password !== process.env.PASSWORD)
-    res.send(createError(401, 'Неверный пароль.'))
+    res.send(createError(401, 'Invalid password.'))
   else {
     const token = getToken()
-    res.send({ status: 'Успешно', token })
+    res.send({ status: 'Succes', token })
   }
 })
 
 app.get('/auth', (_, res) => {
-  res.send({ status: 'Успешно' })
+  res.send({ status: 'Succes' })
 })
 
 app.get('/getLastCertificateId', async (_, res) => {
@@ -121,8 +114,6 @@ app.get('/getLastCertificateId', async (_, res) => {
 
 app.post('/setLastCertificateId', async (req, res) => {
   const body = req?.body
-
-  // console.log('body === ', body)
 
   const { certificateId } = body
 
