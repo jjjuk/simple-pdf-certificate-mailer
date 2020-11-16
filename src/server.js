@@ -11,6 +11,7 @@ const createError = require('http-errors')
 
 const express = require('express')
 const bodyParser = require('body-parser')
+const favicon = require('express-favicon')
 const app = express()
 const pino = require('express-pino-logger')({
   prettyPrint: true,
@@ -29,19 +30,21 @@ app.use(
   })
 )
 
+app.use(favicon(path.join(__dirname + '../client/favicon.ico')))
+
+app.use(express.static(path.join(__dirname, '../client')))
+
 app.use('/templates', express.static(path.join(__dirname, './templates')))
 
 app.use(async (req, res, next) => {
   const endpopint = req.url.split('/')[1]
   console.log('--------route', endpopint)
   if (
-    endpopint !== 'public' &&
-    endpopint !== 'login' &&
-    endpopint !== 'webhook' &&
-    endpopint !== 'favicon.ico' &&
-    endpopint !== 'client' &&
-    endpopint !== ''
+    endpopint === 'setLastCertificateId' ||
+    endpopint === 'getLastCertificateId' ||
+    endpopint === 'auth'
   ) {
+    console.log('--------AUTH', endpopint)
     const password = getPassword(req)
 
     if (password !== process.env.PASSWORD)
@@ -53,6 +56,10 @@ app.use(async (req, res, next) => {
       res.send(createError(401, 'Неверный токен.'))
   }
   next()
+})
+
+app.get('/', function (_, res) {
+  res.sendFile(path.join(__dirname, '../client/index.html'))
 })
 
 app.post('/webhook', async (req, res) => {

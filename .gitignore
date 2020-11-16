@@ -9,7 +9,4 @@ prisma/dev.db
 src/pdf
 src/templates/*
 !src/templates/test
-client/*
-!client/build
-!client/public
 yarn-error.log
