@@ -9,27 +9,38 @@ const prisma = new PrismaClient()
 
 const createError = require('http-errors')
 
-const fastify = require('fastify')({
-  logger: { prettyPrint: true },
+const express = require('express')
+const bodyParser = require('body-parser')
+const app = express()
+const pino = require('express-pino-logger')({
+  prettyPrint: true,
 })
+const cors = require('cors')
 
-fastify.register(require('fastify-cors'), {
-  origin: '*',
-  allowedHeaders: ['Content-Type', 'authorization', 'Authorization'],
-})
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
 
-fastify.register(require('fastify-static'), {
-  root: path.join(__dirname, './templates'),
-  prefix: '/templates/', // optional: default '/'
-})
+app.use(pino)
 
-fastify.addHook('onRequest', async (req, res) => {
+app.use(
+  cors({
+    origin: '*',
+    allowedHeaders: ['Content-Type', 'authorization', 'Authorization'],
+  })
+)
+
+app.use('/templates', express.static(path.join(__dirname, './templates')))
+
+app.use(async (req, res, next) => {
   const endpopint = req.url.split('/')[1]
-
+  console.log('--------route', endpopint)
   if (
     endpopint !== 'public' &&
     endpopint !== 'login' &&
-    endpopint !== 'webhook'
+    endpopint !== 'webhook' &&
+    endpopint !== 'favicon.ico' &&
+    endpopint !== 'client' &&
+    endpopint !== ''
   ) {
     const password = getPassword(req)
 
@@ -41,9 +52,10 @@ fastify.addHook('onRequest', async (req, res) => {
     req.headers.authorization !== `Bearer ${process.env.WEBHOOK_TOKEN}` &&
       res.send(createError(401, 'Неверный токен.'))
   }
+  next()
 })
 
-fastify.post('/webhook', async (req, res) => {
+app.post('/webhook', async (req, res) => {
   // console.log('body === ', req?.body)
 
   const { name, product } = req?.body
@@ -73,8 +85,8 @@ fastify.post('/webhook', async (req, res) => {
   }
 })
 
-fastify.post('/login', (req, res) => {
-  // console.log('BODY ---------------' , req?.body, process.env.PASSWORD)
+app.post('/login', (req, res) => {
+  console.log('BODY ---------------', req.body, process.env.PASSWORD)
   const { password } = req?.body
 
   if (password !== process.env.PASSWORD)
@@ -85,11 +97,11 @@ fastify.post('/login', (req, res) => {
   }
 })
 
-fastify.get('/auth', (_, res) => {
+app.get('/auth', (_, res) => {
   res.send({ status: 'Успешно' })
 })
 
-fastify.get('/getLastCertificateId', async (_, res) => {
+app.get('/getLastCertificateId', async (_, res) => {
   const {
     max: { certificateId: lastId },
   } = await prisma.certificate.aggregate({
@@ -100,7 +112,7 @@ fastify.get('/getLastCertificateId', async (_, res) => {
   res.send({ lastId })
 })
 
-fastify.post('/setLastCertificateId', async (req, res) => {
+app.post('/setLastCertificateId', async (req, res) => {
   const body = req?.body
 
   // console.log('body === ', body)
@@ -142,9 +154,4 @@ fastify.post('/setLastCertificateId', async (req, res) => {
   }
 })
 
-fastify.listen(3333, '192.168.1.3', (err, address) => {
-  if (err) {
-    fastify.log.error(err)
-  }
-  fastify.log.info(`server listening on ${address}`)
-})
+app.listen(3333)
