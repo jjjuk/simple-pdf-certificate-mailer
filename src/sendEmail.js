@@ -1,7 +1,9 @@
 require('dotenv').config()
 
+const fetch = require('node-fetch')
 const nodemailer = require('nodemailer')
-const path = require('path')
+const fs = require('fs')
+// const path = require('path')
 const html = require('./templates/email')
 
 const sendEmail = async ({ email, name, product, productId, pdfPath }) => {
@@ -18,10 +20,19 @@ const sendEmail = async ({ email, name, product, productId, pdfPath }) => {
     },
   })
 
-  let info = await transporter.sendMail({
+  const morfosUrl = new URL(`http://morphos.io/api/inflect-name`)
+
+  morfosUrl.searchParams.append('name', name)
+  morfosUrl.searchParams.append('_format', 'json')
+
+  const response = await fetch(morfosUrl).then((res) => res.json())
+
+  const morfedName = response.cases[1]
+
+  const info = await transporter.sendMail({
     from: '"💌 d-seminar" <info@d-seminar.ru>', // sender address
-    to: 'ass12serg@yandex.ru, gmodhl67@gmail.com', // list of receivers
-    subject: `Заказ для ${name} с сайта d-seminar.ru`, // Subject line
+    to: 'gmodhl67@gmail.com', // list of receivers
+    subject: `Заказ для ${morfedName} с сайта d-seminar.ru`, // Subject line
     text: 'Hello world?', // plain text body
     html: html({ name, productId, product }), // html body
     attachments: [
@@ -32,7 +43,7 @@ const sendEmail = async ({ email, name, product, productId, pdfPath }) => {
     ],
   })
 
-  // console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info))
+  fs.existsSync(pdfPath) && fs.unlinkSync(pdfPath)
 
   return info
 }
