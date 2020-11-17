@@ -18,6 +18,9 @@ const sendEmail = async ({ email, name, product, productId, pdfPath }) => {
       user: process.env.MAIL_USER, // generated ethereal user
       pass: process.env.MAIL_PASSWORD, // generated ethereal password
     },
+    tls:{
+      secureProtocol: 'TLSv1_method'
+      }
   })
 
   const morfosUrl = new URL(`http://morphos.io/api/inflect-name`)
@@ -29,19 +32,21 @@ const sendEmail = async ({ email, name, product, productId, pdfPath }) => {
 
   const morfedName = response.cases[1]
 
-  const info = await transporter.sendMail({
-    from: '"💌 d-seminar" <info@d-seminar.ru>', // sender address
-    to: 'gmodhl67@gmail.com', // list of receivers
-    subject: `Заказ для ${morfedName} с сайта d-seminar.ru`, // Subject line
-    text: 'Hello world?', // plain text body
-    html: html({ name, productId, product }), // html body
-    attachments: [
-      {
-        filename: 'сертификат d-seminar.pdf',
-        path: pdfPath,
-      },
-    ],
-  })
+  const info = await transporter
+    .sendMail({
+      from: '"💌 d-seminar" <info@d-seminar.ru>', // sender address
+      to: 'gmodhl67@gmail.com', // list of receivers
+      subject: `Заказ для ${morfedName} с сайта d-seminar.ru`, // Subject line
+      text: 'Hello world?', // plain text body
+      html: html({ name, productId, product }), // html body
+      attachments: [
+        {
+          filename: 'сертификат d-seminar.pdf',
+          path: pdfPath,
+        },
+      ],
+    })
+    .catch((err) => console.log(err))
 
   fs.existsSync(pdfPath) && fs.unlinkSync(pdfPath)
 

@@ -72,24 +72,18 @@ app.post('/webhook', async (req, res) => {
     },
   })
 
+  const certificateId = lastId + 1
+
   if (!productId) {
     await prisma.certificate.create({
       data: {
-        certificateId: lastId + 1,
+        certificateId,
         certificateStatus: false,
         ...req.body,
       },
     })
     res.send({ status: 'Certificate not generated', response: req.body })
   } else {
-    const { certificateId } = await prisma.certificate.create({
-      data: {
-        certificateId: lastId + 1,
-        certificateStatus: true,
-        ...req.body,
-      },
-    })
-
     const pdfPath = await createPdf({ productId, certificateId, name })
 
     const emailInfo = await sendEmail({
@@ -100,12 +94,33 @@ app.post('/webhook', async (req, res) => {
       pdfPath,
     })
 
-    console.log(emailInfo)
+    if (!emailInfo || emailInfo?.rejected.length > 0) {
+      await prisma.certificate.create({
+        data: {
+          certificateId,
+          certificateStatus: false,
+          ...req.body,
+        },
+      })
+      res.send({
+        status: 'Fail',
+        response: { ...req?.body /* , pdfUrl: pdfPath */ },
+      })
+    } else {
+      console.log(emailInfo)
 
-    res.send({
-      status: 'Succes',
-      response: { ...req?.body /* , pdfUrl: pdfPath */ },
-    })
+      await prisma.certificate.create({
+        data: {
+          certificateId,
+          certificateStatus: true,
+          ...req.body,
+        },
+      })
+      res.send({
+        status: 'Success',
+        response: { ...req?.body /* , pdfUrl: pdfPath */ },
+      })
+    }
   }
 })
 
@@ -135,7 +150,7 @@ app.post('/resend', async (req, res, next) => {
   console.log(emailInfo)
 
   res.send({
-    status: 'Succes',
+    status: 'Success',
     response: { ...req.body /* , pdfUrl: pdfPath */ },
   })
 })
@@ -147,12 +162,12 @@ app.post('/login', (req, res) => {
     res.send(createError(401, 'Invalid password.'))
   else {
     const token = getToken()
-    res.send({ status: 'Succes', token })
+    res.send({ status: 'Success', token })
   }
 })
 
 app.get('/auth', (_, res) => {
-  res.send({ status: 'Succes' })
+  res.send({ status: 'Success' })
 })
 
 app.get('/getLastCertificateId', async (_, res) => {
