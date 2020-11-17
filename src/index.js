@@ -30,13 +30,13 @@ app.use(
   })
 )
 
-app.use(favicon(path.join(__dirname + '../client/favicon.ico')))
+app.use(favicon(path.join(__dirname, '../client/favicon.ico')))
 
 app.use(express.static(path.join(__dirname, '../client')))
 
 app.use('/templates', express.static(path.join(__dirname, './templates')))
 
-app.use(async (req, res, next) => {
+app.use(async (req, _, next) => {
   const endpopint = req.url.split('/')[1]
   if (
     endpopint === 'setLastCertificateId' ||
@@ -46,10 +46,10 @@ app.use(async (req, res, next) => {
     const password = getPassword(req)
 
     if (password !== process.env.PASSWORD)
-      res.send(createError(401, 'Invalid token'))
+      next(createError(401, 'Invalid token'))
   } else if (endpopint === 'webhook') {
     req.headers.authorization !== `Bearer ${process.env.WEBHOOK_TOKEN}` &&
-      res.send(createError(401, 'Invalid token'))
+      next(createError(401, 'Invalid token'))
   }
   next()
 })

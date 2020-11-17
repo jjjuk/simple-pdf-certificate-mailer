@@ -4,8 +4,7 @@
   "description": "Simple and light mailer of generated certificates",
   "main": "src/server.js",
   "scripts": {
-    "start": "nodemon --exec babel-node src/server.js",
-    "client": "nodemon --exec babel-node client/server.js",
+    "start": "nodemon --exec babel-node src",
     "postinstall": "prisma generate",
     "migrate": "prisma migrate save --name 'init' --experimental && prisma migrate up --experimental"
   },
