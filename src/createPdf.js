@@ -5,7 +5,7 @@ const path = require('path')
 const createPdf = async ({ productId, certificateId, name }) => {
   const { html } = require(`./templates/${productId}`)
 
-  const contetnt = html(name, certificateId, productId)
+  const contetnt = html(name, certificateId)
 
   const browser = await puppeteer.launch()
   const page = await browser.newPage()

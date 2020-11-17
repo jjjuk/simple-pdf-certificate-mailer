@@ -3,6 +3,7 @@ const { PrismaClient } = require('@prisma/client')
 
 const { getToken, getPassword } = require('./auth')
 const createPdf = require('./createPdf')
+const sendEmail = require('./sendEmail')
 const path = require('path')
 
 const prisma = new PrismaClient()
@@ -34,7 +35,7 @@ app.use(favicon(path.join(__dirname, '../client/favicon.ico')))
 
 app.use(express.static(path.join(__dirname, '../client')))
 
-app.use('/templates', express.static(path.join(__dirname, './templates')))
+app.use('/images', express.static(path.join(__dirname, './images')))
 
 app.use(async (req, _, next) => {
   const endpopint = req.url.split('/')[1]
@@ -59,30 +60,43 @@ app.get('/', function (_, res) {
 })
 
 app.post('/webhook', async (req, res) => {
-  const { name, product } = req?.body
+  const { name, product, email } = req.body
 
   const productId = Number(product.split('. ')[0].replace(/^\D+/g, '')) || 47088
 
-  if (!productId)
-    res.send({ status: 'Certificate not created', response: req?.body })
-  else {
-    const {
-      max: { certificateId: lastId },
-    } = await prisma.certificate.aggregate({
-      max: {
-        certificateId: true,
+  const {
+    max: { certificateId: lastId },
+  } = await prisma.certificate.aggregate({
+    max: {
+      certificateId: true,
+    },
+  })
+
+  if (!productId) {
+    await prisma.certificate.create({
+      data: {
+        certificateId: lastId + 1,
+        certificateStatus: false,
+        ...req.body,
       },
     })
-
+    res.send({ status: 'Certificate not generated', response: req.body })
+  } else {
     const { certificateId } = await prisma.certificate.create({
       data: {
         certificateId: lastId + 1,
+        certificateStatus: true,
+        ...req.body,
       },
     })
 
-    const url = await createPdf({ productId, certificateId, name })
+    const pdfPath = await createPdf({ productId, certificateId, name })
 
-    res.send({ status: 'Succes', response: { ...req?.body, pdfUrl: url } })
+    const emailInfo = await sendEmail({ email, product, name, productId, pdfPath })
+
+    console.log(emailInfo)
+
+    res.send({ status: 'Succes', response: { ...req?.body, pdfUrl: pdfPath } })
   }
 })
 

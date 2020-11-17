@@ -10,4 +10,10 @@ datasource sqlite {
 model Certificate {
   id Int @default(autoincrement()) @id
   certificateId Int @unique
+  date String?
+  email String?
+  name String?
+  paymentStatus String?
+  certificateStatus Boolean?
+  product String?
 }

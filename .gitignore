@@ -9,4 +9,7 @@ prisma/dev.db
 src/pdf
 src/templates/*
 !src/templates/test
+!src/templates/email.js
+src/images/*
+!src/images/test.jpg
 yarn-error.log
