@@ -92,12 +92,52 @@ app.post('/webhook', async (req, res) => {
 
     const pdfPath = await createPdf({ productId, certificateId, name })
 
-    const emailInfo = await sendEmail({ email, product, name, productId, pdfPath })
+    const emailInfo = await sendEmail({
+      email,
+      product,
+      name,
+      productId,
+      pdfPath,
+    })
 
     console.log(emailInfo)
 
-    res.send({ status: 'Succes', response: { ...req?.body, pdfUrl: pdfPath } })
+    res.send({
+      status: 'Succes',
+      response: { ...req?.body /* , pdfUrl: pdfPath */ },
+    })
   }
+})
+
+app.post('/resend', async (req, res, next) => {
+  const { id } = req.body
+
+  const {
+    email,
+    product,
+    name,
+    certificateId,
+  } = await prisma.certificate.findOne({ where: { id } })
+
+  !certificateId && next(404, 'Certificate not found')
+
+  const productId = Number(product.split('. ')[0].replace(/^\D+/g, '')) || 47088
+
+  const pdfPath = await createPdf({ productId, certificateId, name })
+
+  const emailInfo = await sendEmail({
+    email,
+    product,
+    name,
+    productId,
+    pdfPath,
+  })
+  console.log(emailInfo)
+
+  res.send({
+    status: 'Succes',
+    response: { ...req.body /* , pdfUrl: pdfPath */ },
+  })
 })
 
 app.post('/login', (req, res) => {
