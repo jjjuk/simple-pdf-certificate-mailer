@@ -3,20 +3,16 @@ require('dotenv').config()
 const fetch = require('node-fetch')
 const nodemailer = require('nodemailer')
 const fs = require('fs')
-// const path = require('path')
 const html = require('./templates/email')
 
 const sendEmail = async ({ email, name, product, productId, pdfPath }) => {
-  // let testAccount = await nodemailer.createTestAccount()
-
-  // create reusable transporter object using the default SMTP transport
   let transporter = nodemailer.createTransport({
     host: 'smtp.yandex.ru',
     port: 465,
-    secure: true, // true for 465, false for other ports
+    secure: true, 
     auth: {
-      user: process.env.MAIL_USER, // generated ethereal user
-      pass: process.env.MAIL_PASSWORD, // generated ethereal password
+      user: process.env.MAIL_USER, 
+      pass: process.env.MAIL_PASSWORD, 
     },
     tls:{
       secureProtocol: 'TLSv1_method'
@@ -34,11 +30,10 @@ const sendEmail = async ({ email, name, product, productId, pdfPath }) => {
 
   const info = await transporter
     .sendMail({
-      from: '"💌 d-seminar" <info@d-seminar.ru>', // sender address
-      to: 'gmodhl67@gmail.com', // list of receivers
-      subject: `Заказ для ${morfedName} с сайта d-seminar.ru`, // Subject line
-      text: 'Hello world?', // plain text body
-      html: html({ name, productId, product }), // html body
+      from: '"💌 d-seminar" <info@d-seminar.ru>', 
+      to: 'gmodhl67@gmail.com', 
+      subject: `Заказ для ${morfedName} с сайта d-seminar.ru`,
+      html: html({ name, productId, product }), 
       attachments: [
         {
           filename: 'сертификат d-seminar.pdf',
