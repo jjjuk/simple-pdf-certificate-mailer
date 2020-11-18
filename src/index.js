@@ -42,6 +42,7 @@ app.use(async (req, _, next) => {
   if (
     endpopint === 'setLastCertificateId' ||
     endpopint === 'getLastCertificateId' ||
+    endpopint === 'resend' ||
     endpopint === 'auth'
   ) {
     const password = getPassword(req)
@@ -147,16 +148,42 @@ app.post('/resend', async (req, res, next) => {
     productId,
     pdfPath,
   })
-  console.log(emailInfo)
 
-  res.send({
-    status: 'Success',
-    response: { ...req.body /* , pdfUrl: pdfPath */ },
+  if (!emailInfo || emailInfo?.rejected.length > 0) {   
+    res.send({
+      status: 'Ошибка. Попробуйте еще раз.',
+      response: { ...req?.body /* , pdfUrl: pdfPath */ },
+    })
+  } else {
+    console.log(emailInfo)
+
+    await prisma.certificate.update({
+      where: { id },
+      data: {    
+        certificateStatus: true,       
+      },
+    })
+    res.send({
+      status: 'Сертификат успешно отправлен!',
+      response: { ...req?.body /* , pdfUrl: pdfPath */ },
+    })
+  }
+})
+
+app.get('/feed', async (req, res) => {
+  const { take, skip } = req.body
+
+  const feed = await prisma.certificate.findMany({
+    orderBy: { certificateId: 'asc' },
+    take,
+    skip,
   })
+
+  res.send({ feed })
 })
 
 app.post('/login', (req, res) => {
-  const { password } = req?.body
+  const { password } = req.body
 
   if (password !== process.env.PASSWORD)
     res.send(createError(401, 'Invalid password.'))
@@ -199,6 +226,7 @@ app.post('/setLastCertificateId', async (req, res) => {
       .create({
         data: {
           certificateId: Number(certificateId),
+          name: 'Установленный вручную',
         },
       })
       .catch((error) => res.send(createError(409, error)))
@@ -212,6 +240,7 @@ app.post('/setLastCertificateId', async (req, res) => {
           .create({
             data: {
               certificateId: Number(certificateId),
+              name: 'Установленный вручную',
             },
           })
           .catch((error) => res.send(createError(409, error)))
