@@ -31,7 +31,7 @@ app.use(
   })
 )
 
-app.use(favicon(path.join(__dirname, '../client/favicon.ico')))
+app.use(favicon(path.join(__dirname, '../client/favicon.svg')))
 
 app.use(express.static(path.join(__dirname, '../client')))
 
@@ -149,7 +149,7 @@ app.post('/resend', async (req, res, next) => {
     pdfPath,
   })
 
-  if (!emailInfo || emailInfo?.rejected.length > 0) {   
+  if (!emailInfo || emailInfo?.rejected.length > 0) {
     res.send({
       status: 'Ошибка. Попробуйте еще раз.',
       response: { ...req?.body /* , pdfUrl: pdfPath */ },
@@ -159,8 +159,8 @@ app.post('/resend', async (req, res, next) => {
 
     await prisma.certificate.update({
       where: { id },
-      data: {    
-        certificateStatus: true,       
+      data: {
+        certificateStatus: true,
       },
     })
     res.send({
@@ -233,15 +233,19 @@ app.post('/setLastCertificateId', async (req, res) => {
       .then((response) => res.send({ response }))
   else {
     await prisma.certificate
-      .deleteMany()
+      .deleteMany({ where: { certificateId: { gt: Number(certificateId) } } })
       .catch((error) => res.send(createError(409, error)))
       .then(() =>
         prisma.certificate
-          .create({
-            data: {
+          .upsert({
+            where: {
+              certificateId: Number(certificateId),
+            },
+            create: {
               certificateId: Number(certificateId),
               name: 'Установленный вручную',
             },
+            update: {},
           })
           .catch((error) => res.send(createError(409, error)))
           .then((response) => res.send({ response }))
