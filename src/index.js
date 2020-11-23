@@ -56,7 +56,7 @@ app.use(async (req, _, next) => {
   next()
 })
 
-app.get('/', function (_, res) {
+app.get('/', (_, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'))
 })
 

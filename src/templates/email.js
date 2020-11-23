@@ -114,7 +114,9 @@ const html = ({ name, productId, product }) => {
       </li>
     </ul>
     <ul>
-      <li>
+      ${
+        !!googleDriveUrl && !!yandexDiscUrl
+          ? `<li>
         <strong
           >Весь методический материал
           <a
@@ -126,7 +128,9 @@ const html = ({ name, productId, product }) => {
             - ссылка.</a
           ><br /><br
         /></strong>
-      </li>
+      </li>`
+          : ``
+      }
       <li>
         У меня только просьба не выкладывать материалы в свободный доступ
         интернета. <br />Так как у нас есть определенные договоренности с
